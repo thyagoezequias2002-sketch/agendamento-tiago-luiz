@@ -1,36 +1,192 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Barbearia Completo</title>
+    <title>Agende seu Corte | Barbearia Lacerda Club</title>
     <style>
-        /* --- ESTILOS BÁSICOS --- */
+        :root {
+            --primary: #e0a800; /* Dourado */
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --disabled: #444;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f4f7f6; color: #333; }
 
-        /* --- MENU LATERAL --- */
-        .sidebar { width: 250px; background-color: #1e2b3c; color: #fff; display: flex; flex-direction: column; padding: 20px 0; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 24px; color: #e0a800; }
-        .menu-items { list-style: none; }
-        .menu-items li { padding: 15px 25px; cursor: pointer; transition: background 0.3s; }
-        .menu-items li:hover, .menu-items li.active { background-color: #2c3e50; border-left: 4px solid #e0a800; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
 
-        /* --- CONTEÚDO PRINCIPAL --- */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { font-size: 28px; color: #1e2b3c; }
-        .date { color: #777; font-weight: 500; }
+        .container { max-width: 500px; width: 100%; background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-        /* --- CONTROLE DE TELAS (JAVASCRIPT) --- */
-        .page-section { display: none; }
-        .page-section.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        h2 { text-align: center; margin-bottom: 25px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- ESTILOS COMPARTILHADOS (CARDS E TABELAS) --- */
-        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .card { background-color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #1e2b3c; }
-        .card h3 { font-size: 14px; color: #777; text-transform: uppercase; margin-bottom: 10px; }
-        .card .value { font-size: 32px; font-weight: bold; color: #1e2b3c; }
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.4s; }
+
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: white; }
+
+        /* Estilo dos Serviços */
+        .service-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border: 1px solid #333; border-radius: 10px; margin-bottom: 10px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .service-item:hover { border-color: var(--primary); background: #252525; }
+        .service-item input { width: auto; margin-bottom: 0; accent-color: var(--primary); }
+        .price { color: var(--primary); font-weight: bold; }
+
+        /* Grade de Horários */
+        .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .time-slot {
+            padding: 10px; text-align: center; background: #2a2a2a; border-radius: 5px; cursor: pointer; border: 1px solid transparent;
+        }
+        .time-slot:hover:not(.taken) { border-color: var(--primary); color: var(--primary); }
+        .time-slot.selected { background: var(--primary); color: #000; font-weight: bold; }
+        .time-slot.taken { background: var(--disabled); color: #777; cursor: not-allowed; text-decoration: line-through; }
+
+        .btn-next {
+            width: 100%; padding: 15px; background: var(--primary); color: #000;
+            border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Agendamento</h2>
+
+    <div class="step active" id="step1">
+        <label>Nome</label>
+        <input type="text" id="nome" placeholder="Seu nome">
+        <label>Sobrenome</label>
+        <input type="text" id="sobrenome" placeholder="Seu sobrenome">
+        <label>Telefone (WhatsApp)</label>
+        <input type="tel" id="tel" placeholder="(00) 00000-0000">
+        <button class="btn-next" onclick="nextStep(2)">Próximo: Escolher Corte</button>
+    </div>
+
+    <div class="step" id="step2">
+        <label>Selecione os serviços:</label>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Corte Máquina</span> <span class="price">R$ 25,00</span>
+            <input type="checkbox" name="servico" value="25">
+        </div>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Máquina e Tesoura</span> <span class="price">R$ 30,00</span>
+            <input type="checkbox" name="servico" value="30">
+        </div>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Corte a Tesoura</span> <span class="price">R$ 35,00</span>
+            <input type="checkbox" name="servico" value="35">
+        </div>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Barba Completa</span> <span class="price">R$ 20,00</span>
+            <input type="checkbox" name="servico" value="20">
+        </div>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Designer de Barba</span> <span class="price">R$ 10,00</span>
+            <input type="checkbox" name="servico" value="10">
+        </div>
         
-        .section-title { margin-bottom: 15px; font-size: 20px; color
+        <p style="margin: 15px 0 10px; font-size: 14px; color: var(--primary);">Adicionais:</p>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Limpeza Facial</span> <span class="price">R$ 30,00</span>
+            <input type="checkbox" name="servico" value="30">
+        </div>
+        <div class="service-item" onclick="toggleCheck(this)">
+            <span>Sobrancelha</span> <span class="price">R$ 5,00</span>
+            <input type="checkbox" name="servico" value="5">
+        </div>
+
+        <button class="btn-next" onclick="nextStep(3)">Próximo: Data e Hora</button>
+    </div>
+
+    <div class="step" id="step3">
+        <label>Escolha a Data</label>
+        <input type="date" id="data-escolhida" onchange="gerarHorarios()">
+        
+        <label>Horários Disponíveis</label>
+        <div class="time-grid" id="time-grid">
+            </div>
+
+        <button class="btn-next" id="finalizar" onclick="finalizarAgendamento()">Finalizar Agendamento</button>
+    </div>
+
+    <div class="step" id="step4">
+        <div style="text-align: center; padding: 20px;">
+            <h3 style="color: var(--primary); font-size: 24px;">✓ Reservado!</h3>
+            <p style="margin-top: 15px;" id="resumo-final"></p>
+            <button class="btn-next" onclick="location.reload()">Novo Agendamento</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dadosAgendamento = {};
+
+    function nextStep(step) {
+        // Validação simples
+        if (step === 2 && document.getElementById('nome').value === "") {
+            alert("Por favor, preencha seu nome."); return;
+        }
+
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + step).classList.add('active');
+    }
+
+    function toggleCheck(element) {
+        const checkbox = element.querySelector('input');
+        checkbox.checked = !checkbox.checked;
+        element.style.borderColor = checkbox.checked ? 'var(--primary)' : '#333';
+    }
+
+    function gerarHorarios() {
+        const grid = document.getElementById('time-grid');
+        grid.innerHTML = "";
+        const horarios = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+        
+        // Simulação de horários já ocupados (em um sistema real isso viria do banco de dados)
+        const ocupados = ["10:00", "15:00"];
+
+        horarios.forEach(hora => {
+            const div = document.createElement('div');
+            div.classList.add('time-slot');
+            div.innerText = hora;
+            
+            if (ocupados.includes(hora)) {
+                div.classList.add('taken');
+            } else {
+                div.onclick = function() {
+                    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                    div.classList.add('selected');
+                    dadosAgendamento.hora = hora;
+                };
+            }
+            grid.appendChild(div);
+        });
+    }
+
+    function finalizarAgendamento() {
+        if (!dadosAgendamento.hora) {
+            alert("Escolha um horário!"); return;
+        }
+
+        const nome = document.getElementById('nome').value;
+        const data = document.getElementById('data-escolhida').value;
+        
+        document.getElementById('resumo-final').innerHTML = `
+            Obrigado, <strong>${nome}</strong>!<br>
+            Seu horário de <strong>${dadosAgendamento.hora}h</strong> no dia <strong>${data}</strong> foi marcado com sucesso.<br><br>
+            Aguardamos você!
+        `;
+        
+        nextStep(4);
+    }
+</script>
+
+</body>
+</html>
